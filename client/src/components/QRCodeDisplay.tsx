@@ -17,11 +17,25 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
   port,
   tunnelUrl,
 }) => {
+  // Check if accessing via a public cloud host/domain (e.g. Render, Railway, Fly.io, custom domain)
+  const isPublicHost = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const h = window.location.hostname;
+    return (
+      h !== 'localhost' &&
+      h !== '127.0.0.1' &&
+      !h.startsWith('192.168.') &&
+      !h.startsWith('10.') &&
+      !h.match(/^172\.(1[6-9]|2[0-9]|3[0-1])\./)
+    );
+  }, []);
+
   // Check if current network looks like an iPhone Hotspot (172.20.10.x)
   const isHotspotSubnet = localIps.some((ip) => ip.startsWith('172.20.10.'));
 
-  // Default to hotspot tunnel if available or if on hotspot subnet
-  const [networkMode, setNetworkMode] = useState<'tunnel' | 'lan'>(() => {
+  // Default to public web mode if hosted on a public domain, else hotspot tunnel or local LAN
+  const [networkMode, setNetworkMode] = useState<'public' | 'tunnel' | 'lan'>(() => {
+    if (isPublicHost) return 'public';
     if (tunnelUrl || isHotspotSubnet) return 'tunnel';
     return 'lan';
   });
@@ -39,6 +53,10 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
       const h = customHost.trim();
       const prefix = h.startsWith('http://') || h.startsWith('https://') ? '' : 'https://';
       return `${prefix}${h}/?room=${roomId}&role=sender`;
+    }
+
+    if (networkMode === 'public') {
+      return `${window.location.origin}/?room=${roomId}&role=sender`;
     }
 
     if (networkMode === 'tunnel' && tunnelUrl) {
@@ -87,28 +105,53 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
         className="glass-panel-subtle flex items-center"
         style={{ padding: '0.25rem', borderRadius: '0.65rem', marginBottom: '1.25rem' }}
       >
-        <button
-          onClick={() => setNetworkMode('tunnel')}
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.35rem',
-            padding: '0.45rem',
-            borderRadius: '0.5rem',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            background: networkMode === 'tunnel' ? 'rgba(99, 102, 241, 0.4)' : 'transparent',
-            color: networkMode === 'tunnel' ? '#ffffff' : '#94a3b8',
-            transition: 'all 0.15s ease',
-          }}
-        >
-          <Zap size={14} style={{ color: '#818cf8' }} />
-          <span>Hotspot / Remote</span>
-        </button>
+        {isPublicHost ? (
+          <button
+            onClick={() => setNetworkMode('public')}
+            style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.35rem',
+              padding: '0.45rem',
+              borderRadius: '0.5rem',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              background: networkMode === 'public' ? 'rgba(99, 102, 241, 0.4)' : 'transparent',
+              color: networkMode === 'public' ? '#ffffff' : '#94a3b8',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Globe size={14} style={{ color: '#818cf8' }} />
+            <span>Public Web</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => setNetworkMode('tunnel')}
+            style={{
+              flex: 1,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.35rem',
+              padding: '0.45rem',
+              borderRadius: '0.5rem',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              background: networkMode === 'tunnel' ? 'rgba(99, 102, 241, 0.4)' : 'transparent',
+              color: networkMode === 'tunnel' ? '#ffffff' : '#94a3b8',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Zap size={14} style={{ color: '#818cf8' }} />
+            <span>Hotspot / Remote</span>
+          </button>
+        )}
 
         <button
           onClick={() => setNetworkMode('lan')}
@@ -200,16 +243,27 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
       <div
         style={{
           padding: '0.75rem',
-          background: networkMode === 'tunnel' ? 'rgba(99, 102, 241, 0.08)' : 'rgba(16, 185, 129, 0.08)',
+          background:
+            networkMode === 'public' || networkMode === 'tunnel'
+              ? 'rgba(99, 102, 241, 0.08)'
+              : 'rgba(16, 185, 129, 0.08)',
           borderRadius: '0.75rem',
-          border: `1px solid ${networkMode === 'tunnel' ? 'rgba(99, 102, 241, 0.25)' : 'rgba(16, 185, 129, 0.25)'}`,
+          border: `1px solid ${
+            networkMode === 'public' || networkMode === 'tunnel'
+              ? 'rgba(99, 102, 241, 0.25)'
+              : 'rgba(16, 185, 129, 0.25)'
+          }`,
           fontSize: '0.8rem',
           color: '#cbd5e1',
           marginBottom: '0.75rem',
           lineHeight: 1.45,
         }}
       >
-        {networkMode === 'tunnel' ? (
+        {networkMode === 'public' ? (
+          <div>
+            <strong>🌐 Public Web Mode:</strong> Connected via <code>{typeof window !== 'undefined' ? window.location.host : ''}</code>. Anyone scanning this QR code from any Wi-Fi or cellular network worldwide will pair instantly.
+          </div>
+        ) : networkMode === 'tunnel' ? (
           <div>
             <strong>📱 Hotspot / Anywhere Mode:</strong> Uses a direct secure HTTPS tunnel. This fixes the Apple iOS restriction that blocks Safari from accessing laptop local IPs on personal hotspots.
           </div>

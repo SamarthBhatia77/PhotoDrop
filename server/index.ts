@@ -105,11 +105,12 @@ async function startServer() {
   // API to get local network IP and tunnel information
   app.get('/api/network-info', (req, res) => {
     const ips = getLocalIpAddresses();
+    const publicUrl = process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_URL || activeTunnelUrl || '';
     res.json({
       localIps: ips,
       port: PORT,
       primaryIp: ips[0] || 'localhost',
-      tunnelUrl: activeTunnelUrl,
+      tunnelUrl: publicUrl,
     });
   });
 

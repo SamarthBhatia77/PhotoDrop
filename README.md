@@ -110,6 +110,21 @@ Transfer
 Save / Copy on Windows
 ```
 
+## 🌐 Public Cloud Hosting (Render, Railway, Fly.io)
+
+PhotoDrop is 100% production-ready for free cloud deployment on services supporting Node.js and WebSockets:
+
+### Deploy on Render (Free)
+1. Push this repository to your GitHub account.
+2. Sign in to [Render](https://render.com/) and click **New +** → **Web Service**.
+3. Select this repository.
+4. Configure:
+   - **Environment:** `Node`
+   - **Build Command:** `npm install && npm run build`
+   - **Start Command:** `npm start`
+   - **Environment Variables:** `NODE_ENV` = `production`
+5. Click **Deploy Web Service**. You will receive an instant public HTTPS domain (e.g. `https://photodrop-xyz.onrender.com`) that automatically pairs with your iPhone from anywhere!
+
 ## 🛠️ Tech Stack
 
 * **Frontend:** React 19, TypeScript, Vite
