@@ -129,11 +129,3 @@ PhotoDrop is designed around a simple principle:
 > **Your photos should go from your phone to your laptop, not to someone else's cloud.**
 
 Photos are processed in browser memory and are not intentionally persisted by the application.
-
-## 📄 License
-
-Add your preferred license here, e.g.:
-
-```text
-MIT License
-```
